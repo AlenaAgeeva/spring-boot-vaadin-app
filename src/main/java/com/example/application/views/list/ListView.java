@@ -1,6 +1,7 @@
 package com.example.application.views.list;
 
 import com.example.application.data.entity.Contact;
+import com.example.application.data.service.CrmService;
 import com.vaadin.flow.component.Component;
 import com.vaadin.flow.component.button.Button;
 import com.vaadin.flow.component.grid.Grid;
@@ -19,13 +20,27 @@ public class ListView extends VerticalLayout {
     Grid<Contact> grid = new Grid<>(Contact.class);
     TextField filterText = new TextField();
     ContactForm form;
+    private CrmService crmService;
 
-    public ListView() {
+    public ListView(CrmService crmService) {
+        this.crmService = crmService;
         addClassName("list-view");
         setSizeFull();
         configureGrid();
         configureForm();
         add(getToolbar(), getContent());
+        updateList();
+        closeEditor();
+    }
+
+    private void closeEditor() {
+        form.setContact(null);
+        form.setVisible(false);
+        removeClassName("editing");
+    }
+
+    private void updateList() {
+        grid.setItems(crmService.findAllContacs(filterText.getValue()));
     }
 
     private void configureGrid() {
@@ -35,10 +50,21 @@ public class ListView extends VerticalLayout {
         grid.addColumn(contact -> contact.getStatus().getName()).setHeader("Status");
         grid.addColumn(contact -> contact.getCompany().getName()).setHeader("Company");
         grid.getColumns().forEach(col -> col.setAutoWidth(true));
+        grid.asSingleSelect().addValueChangeListener(e -> editContact(e.getValue()));
+    }
+
+    private void editContact(Contact contact) {
+        if (contact == null) {
+            closeEditor();
+        } else {
+            form.setContact(contact);
+            form.setVisible(true);
+            addClassName("editing");
+        }
     }
 
     private void configureForm() {
-        form = new ContactForm(Collections.emptyList(), Collections.emptyList());
+        form = new ContactForm(crmService.findAllCompanies(), crmService.findAllStatuses());
         form.setWidth("30em");
     }
 
@@ -46,6 +72,7 @@ public class ListView extends VerticalLayout {
         filterText.setPlaceholder("Filter by name...");
         filterText.setClearButtonVisible(true);
         filterText.setValueChangeMode(ValueChangeMode.LAZY);
+        filterText.addValueChangeListener(e -> updateList());
 
         Button addContactButton = new Button("Add contact");
 
