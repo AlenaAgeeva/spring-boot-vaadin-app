@@ -59,19 +59,10 @@ public class ContactForm extends FormLayout {
         cancel.addThemeVariants(ButtonVariant.LUMO_TERTIARY);
         save.addClickListener(event -> validateAndSave());
         delete.addClickListener(event -> validateAndDelete());
-        cancel.addClickListener(event -> validateAndCancel());
+        cancel.addClickListener(event -> fireEvent(new CloseEvent(this)));
         save.addClickShortcut(Key.ENTER);
         cancel.addClickShortcut(Key.ESCAPE);
         return new HorizontalLayout(save, delete, cancel);
-    }
-
-    private void validateAndCancel() {
-        try {
-            binder.writeBean(contact);
-            fireEvent(new CloseEvent(this));
-        } catch (ValidationException e) {
-            e.printStackTrace();
-        }
     }
 
     private void validateAndDelete() {
